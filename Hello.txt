@@ -1,0 +1,504 @@
+ #include<stdio.h>
+#include<time.h>
+#include<iostream>
+#include<stdlib.h>
+using namespace std;
+#define MaxSize 1000
+#define BOOL int 
+#define FALSE 0
+#define TRUE 1
+typedef struct entry
+{	//数据元素
+	int key;	//排序关键字，KeyType应该为可比较类型
+	int data;	//data包含数据元素中的其他数据项
+}Entry;
+typedef struct list{		//顺序表
+	int n;		//待排序数据元素数量
+	Entry D[MaxSize];	//静态数组存储数据元素
+}List;
+typedef List HeapType;
+          //以下是简单选择排序 
+int FindMin(List list, int startIndex)  //在startIndex至表尾范围内找到最小关键字下标
+{
+		int i, minIndex = startIndex;
+		for(i=startIndex+1; i < list.n; i++)
+		{
+			if(list.D[i].key < list.D[minIndex].key)
+				minIndex = i;
+		}
+        return minIndex;
+}
+void Swap(Entry* D, int i, int j)   //交换顺序表中两个元素位置
+{
+		if(i == j) return;
+		Entry temp = *(D + i);
+		*(D + i) = *(D + j);
+		*(D + j) = temp;
+		return ;
+}
+void SelectSort(List* list)
+{
+		int minIndex, startIndex = 0;
+		while(startIndex < list->n-1)
+		{
+			minIndex = FindMin(*list, startIndex);
+			Swap(list->D, startIndex, minIndex);
+			startIndex++;
+		}
+		return ;
+   }
+   
+              //以下是直接插入排序
+void InsertSort(List *list)
+{
+	int i, j;  // i标识待插入元素下标
+	for(i=1; i<list->n; i++)
+	{
+		Entry insertItem = list->D[i];
+		for(j=i-1; j>=0; j--)
+		{
+	//不断将有序序列中元素向后移动，
+	//为待插入元素空出一个位置
+			if(insertItem.key < list->D[j].key)  
+			list->D[j+1] = list->D[j]; 
+			else break;
+		}
+    list->D[j+1] = insertItem; //待插入元素有序存放至有序序列中
+}
+      return ;
+}
+             //以下是冒泡排序
+void BubbleSort(List *list)
+{// i标识每趟排序范围最后一个元素下标，每趟排序元素下标范围是0 ~ i
+	int i, j;  
+	BOOL isSwap = FALSE; //标记一趟排序中是否发生了元素交换
+	for(i=list->n-1; i>0; i--)
+	{
+		for(j=0; j<i; j++)
+		{
+			if(list->D[j].key > list->D[j+1].key)  
+			{
+				Swap(list->D, j, j+1); 
+				isSwap = TRUE;
+			}
+		}
+    if(!isSwap) 
+	 break; //如果本趟排序没有发生元素交换，排序完成
+   }
+   return ;
+} 
+            //以下是快速排序
+int Partition(List* list, int low, int high)
+{
+		int i = low, j = high + 1;
+		Entry pivot = list->D[low]; //pivot是分割元素
+		do{
+			do i++;	
+			while(list->D[i].key < pivot.key); //i前进
+			do j--;	
+			while(list->D[j].key > pivot.key); //j前进
+			if(i < j)	Swap(list->D, i, j);
+        } while(i < j); 
+        Swap(list->D, low, j);
+        return j;//此时j是分割元素下标
+} 
+void QuickSort(List *list, int low, int high) //快速排序的递归函数
+{
+	int k;
+	if(low < high) //当前待排序列至少包含2个元素
+	{
+		k = Partition(list, low, high);
+		QuickSort(list, low, k-1);
+		QuickSort(list, k+1, high);
+     }
+     return ;
+}
+void QuickSort(List *list) //快速排序算法的主调用函数
+{
+	QuickSort(list, 0, list->n-1);
+}
+
+        //以下是两路合并排序
+void Merge(List* list,Entry* temp,int low,int n1,int n2)
+{
+	int i=low;
+	int j=low+n1;
+	while(i<=low+n1-1&&j<=low+n1+n2-1)
+	{
+		if( list->D[i].key<=list->D[j].key )
+		   {
+		   	   *temp++=list->D[i++];
+		   }
+	    else *temp++=list->D[j++];
+	}
+	while(i<=low+n1-1)
+	    {
+	    	*temp++=list->D[i++];
+		}
+	while(j<=low+n1+n2-1)
+	    {
+		    *temp++=list->D[j++];
+	    }
+	    return ;
+}
+//两路合并排序算法
+void MergeSort(List *list)
+{
+	Entry temp[MaxSize];
+	int low, n1, n2, i, size = 1; 
+	while(size < list->n)
+	   {
+		low = 0;  //low是一对待合并序列中第一个序列的第一个元素下标
+	     while(low + size < list->n)
+		{   // low + size < list->n说明至少存在两个子序列需要合并
+			n1 = size;
+			if(low + size*2 <list->n) n2 = size; //计算第二个序列长度
+			else n2 = list->n-low-size;
+			Merge(list, temp, low, n1, n2);
+			low += n1 + n2;   //确定下一对待合并序列中第一个序列的第一个元素下标
+		}
+    for(i=0; i<list->n; i++) 
+	    list->D[i] = temp[i]; //复制一趟合并排序结果
+    size *= 2; //子序列长度翻倍
+     }
+     return ;
+}
+     //以下是堆排序 
+
+void Creat(List &L) 
+  {
+	printf("请输入数据个数：");
+	scanf("%d", &L.n);
+	printf("请输入%d个数据元素：", L.n);
+	for (int i = 1; i <= L.n; i++)
+		scanf("%d", &L.D[i].key);
+	return ;
+}
+void Print(List L) 
+{
+	printf("输出：");
+	for (int i = 1; i <= L.n; i++)
+		printf("%d ", L.D[i].key);
+	printf("\n\n");
+	return ;
+}
+ 
+void HeapAdjust(List &H, int s, int m) {
+	//已知H.D[s..m]中记录的关键字除H.D[s].key之外均满足堆的定义
+	//本函数调整H.r[s]的关键字，使H.r[s..m]成为一个大顶堆
+	Entry rc = H.D[s];
+	for (int j = 2 * s; j <= m; j *= 2) 
+	  {      //沿key较大的孩子节点向下筛选
+		  if (j < m && H.D[j].key >= H.D[j + 1].key) 
+		       ++j;//j为key较大的记录的下标
+		  if (rc.key < H.D[j].key) 
+		       break;        //rc应插入在位置s上
+		  H.D[s] = H.D[j];
+		  s = j;
+	 }
+	H.D[s] = rc;                               //插入
+	return ;
+}
+ 
+void HeapSort(List &H) 
+{
+	//对顺序表H进行堆排序
+	for (int i = H.n/2; i > 0; i--)  //把H.r[1..H.length]建成大顶堆
+		HeapAdjust(H, i,H.n);
+	for (int i = H.n; i > 1; i--) {
+		swap(H.D[1], H.D[i]);   //将堆顶记录和当前未经排序的子序列Hr[1..i]中最后一个记录相互交换
+	   HeapAdjust(H, 1, i - 1);//将H.r[1..i-1]重新调整为大顶堆
+	}
+	return ;
+}
+
+int main()
+{
+	List sxb;
+	Creat (sxb);
+	cout<<"原来的序列为："<<endl;
+	Print(sxb);
+	cout<<endl;
+	cout<<"经过冒泡排序后的序列为："<<endl;
+	BubbleSort(&sxb);
+	Print(sxb);
+	cout<<endl;
+	cout<<"经过选择排序后的序列为："<<endl;
+	SelectSort(&sxb);
+	Print(sxb);
+	cout<<endl;
+	cout<<"经过插入排序后的序列为："<<endl;
+	InsertSort(&sxb);
+	Print(sxb);
+	cout<<endl;
+	cout<<"经过快速排序后的序列为："<<endl; 
+	QuickSort(&sxb);
+	Print(sxb);
+	cout<<endl;
+//	List sxb2;
+//	Creat(sxb2);
+	cout<<"sxb   "<<endl;
+	Print(sxb);
+//	cout<<"sxb2  "<<endl;
+//	Print(sxb2);
+//	cout<<"经过两路合并排序后的序列为："<<endl; 
+//	MergeSort(&sxb);
+//	Print(sxb);
+	cout<<endl;
+    cout<<"经过堆排序后的序列为："<<endl;
+    HeapSort(sxb);
+    Print(sxb);
+	cout<<endl;
+	return 0; 
+}
+第二题：利用函数，生成N个关键字
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+int main()
+{
+  int i;
+  int n;
+  scanf("%d",&n);
+  srand((unsigned)time(NULL));
+  for(int j=1;j<=n;j++)
+   printf("  %d  ",rand()%n+1);
+  printf("\n");
+}
+第三题：验证其排序所需的时间
+#include <iostream>
+using namespace std;
+#include <time.h>
+#include <stdlib.h>
+//#include <ctime>
+//template <typename T>
+#define bool int 
+#define false 0 
+#define true 1 
+int N;
+int small[200000];
+int big[200000];
+void bubble_sort(int a[], int num)
+{
+	int i,j;
+    int t;
+    for(i=0;i<num;i++)
+	{//这个循环说明要循环N次 每循环一个把最大的放最后
+      for(j=0;j<num-1-i;j++)
+	   {//这里的循环时把相邻的2数比较 交换 交换到承认后面的数最大
+          if(a[j]>a[j+1])
+		  {
+            t=a[j];
+            a[j]=a[j+1];
+            a[j+1]=t;
+}
+}
+}
+}
+
+
+//选择排序：
+
+void select_sort(int a[], int num)
+{
+	int min;
+	int locate;//最小值位置
+	for(int i=0; i<num-1; i++){
+		min = a[i];
+		//找最小值
+		for(int j=i+1; j<num; j++){
+			if(a[j] < min){
+				locate = j;
+			}
+		}
+		swap(a[i], a[locate]);
+	}
+}
+
+
+//插入排序：
+
+//template <typename T>
+void insert_sort(int a[], int num){
+	int j;
+	int temp;//暂存无序区待插入元素
+	for(int i=1; i<num; ++i){
+		j = i;
+		temp = a[i];
+		//待插入元素与有序区元素一一比较
+		while(j > 0 && temp < a[j-1]/*如果小于有序区被比较元素*/){
+			//则将有序区元素后移
+			a[j] = a[j-1];
+			//将被比较元素前移一位
+			--j;
+		}
+		//将待插入元素插入相应位置
+		a[j] = temp;
+	}
+}
+
+
+//快速排序：
+int quicksort(int a[],int start,int end)
+{
+   int i,eq;
+   int small_count=0,big_count=0;
+     eq=a[start];
+   if(start>=end) 
+      return 0;
+   for(i=start+1;i<=end;i++)
+   {
+       if(a[i]<eq)
+	   {
+          small[small_count]=a[i];
+          small_count++;
+          }
+       else
+        {
+           big[big_count]=a[i];
+           big_count++;
+       }
+}
+    for(i=0;i<small_count;i++)
+      a[start+i]=small[i];
+    a[start+small_count]=eq;
+    for(i=0;i<big_count;i++)
+      a[start+i+small_count+1]=big[i];
+    quicksort(a,start,start+small_count-1);
+    quicksort(a,start+small_count+1,end);
+   }
+   
+void quick_sort(int a[], int num)
+{
+	//如果一个元素，不用排
+	if(num ==1)
+		return ;
+	//如果只有两个元素没必要分界
+	if(num == 2)
+	{
+		if(a[1] < a[0])
+			swap(a[1], a[0]);
+		return ;
+	}
+	//取中间元素为界，希望可以将两部分尽量分的均匀一些
+	swap(a[num/2], a[0]);
+	int bound = a[0];
+	//声明左右两个指针变量
+	int*L = a+1;
+	int*R = a+num-1;
+	//作比较，不合适的交换，直至一趟排序完成
+	while(L<R){
+		while(L < R && *L<bound)
+			++L;
+		while(R >= L && *R > bound)
+			--R;
+		if(L < R)
+			swap(*L, *R);
+	}
+	if(*R < bound)
+		swap(*R, *a);
+	//递归排序两个分开的子序列 
+	quick_sort(a, R-a);
+	quick_sort(R+1, num-1-(R-a));
+}
+void print(int a[])
+{
+	for(int i=0;i<N;i++)
+	   {
+	   	cout<<" "<<a[i]<<" ";
+	   	if(i%10==0)
+	   	  cout<<endl;
+	   }
+	return ;
+ } 
+void HeapAdjust(int a[],int s,int e)
+{
+    int length = e-s;
+    int rc=a[s];
+    for(int i=2*s;i<=e;i*=2)
+    {
+        if(i<e &&a[i]<a[i+1])
+            i++;
+        if(a[i]<rc)
+            break;
+        a[s] = a[i];
+        s=i;
+    }
+    a[s] = rc;
+}
+
+void HeapSort(int a[],int length)          //a数组必须由下标1开始储存
+{
+    for(int i=length/2;i>0;i--)
+    {
+        HeapAdjust(a,i,length);
+    }
+    int t;
+    for(int i=length;i>1;i--)
+    {
+        t=a[i];
+        a[i]=a[1];
+        a[1]=t;
+        HeapAdjust(a,1,i-1);
+    }
+}
+
+//测试程序如下：
+int main()
+{
+	cout<<"请输入个数："<<endl;
+    cin>>N;
+	while(N)
+	  {	
+	    int a[N];
+		srand((unsigned)time(NULL));
+		cout<<"待排序的原序列为："<<endl; 
+        for(int j=0;j<N;j++)
+         {
+         	 a[j]=rand()%N+1;
+		     //cout<<" "<<a[j]<<" ";
+		    // if(j%10==0)
+		      // cout<<endl;
+		 }
+		int choice;
+		cout<<"1.冒泡排序 2.插入排序 3.选择排序 4.快速排序 5.堆排序"<<endl;
+		clock_t t1;
+		clock_t t2;
+		cin>>choice;
+		switch(choice)
+		{
+			case 1:
+				t1 = clock();
+				bubble_sort(a, N);
+				t2 = clock();
+				break;
+			case 2:
+				t1 = clock();
+				insert_sort(a, N);
+				t2 = clock();
+				break;
+			case 3:
+				t1 = clock();
+				select_sort(a, N);
+				t2 = clock();
+				break;
+			case 4:
+				t1 = clock();
+				quicksort(a,0,N-1);
+				t2 = clock();
+				break;
+			case 5:
+				t1 = clock();
+				HeapSort(a, N);
+				t2 = clock();
+				break;
+		}
+		cout<<"完成排序！";
+		//print(a); 
+		cout<<endl<<"完成排序所需要的时间为："<<endl;
+		cout << double(t2-t1)/CLOCKS_PER_SEC << endl;
+		cout<<"请输入个数："<<endl;
+        cin>>N;
+	}	
+	return 0;
+}
